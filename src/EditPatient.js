@@ -1,112 +1,199 @@
-
-// import React, { useState, useEffect } from 'react';
-// import axios from 'axios';
-
-// const EditPatient = ({ patientId, onClose, onUpdate }) => {
-//   const [patientData, setPatientData] = useState({});
-
-//   useEffect(() => {
-// //get
-//     const fetchPatientData = async () => {
-//       try {
-//         const response = await axios.get(`https://backendhospital-ji3g.onrender.com/patients/${patientId}`);
-//         setPatientData(response.data);
-//       } catch (error) {
-//         console.error('Error fetching patient data for editing:', error);
-//       }
-//     };
-
-
-//     fetchPatientData();
-//   }, [patientId]);
-
-// //put
-//   const handleUpdate = async () => {
-//     try { 
-//       await axios.put(`https://backendhospital-ji3g.onrender.com/patients/${patientId}`, patientData);
-//       onClose();
-//       onUpdate();
-//     } catch (error) {
-//       console.error('Error updating patient:', error);
-//     }
-//   };
-
-//   return (
-//     <div>
-//       <h2>Edit Patient</h2>
-
-//       <label>Name: </label>
-//       <input type="text" value={patientData.name} onChange={(e) => setPatientData({ ...patientData, name: e.target.value })} />
-
-
-//       <button onClick={handleUpdate}>Update</button>
-//       <button onClick={onClose}>Cancel</button>
-//     </div>
-//   );
-// };
-
-// export default EditPatient;
-
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const EditPatient = ({ patientId, onClose, onUpdate }) => {
-  const [patientData, setPatientData] = useState({});
 
+  const [patientData, setPatientData] = useState({
+    name: "",
+    weight: "",
+    gender: "",
+    age: "",
+    disease: ""
+  });
+
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
+  // Fetch patient details
   useEffect(() => {
-    //get
     const fetchPatientData = async () => {
       try {
-        const response = await axios.get(`http://hms-env.eba-tvxwbfse.eu-north-1.elasticbeanstalk.com/patient/${patientId}`);
+        const response = await axios.get(
+          `http://hms-env.eba-tvxwbfse.eu-north-1.elasticbeanstalk.com/patient/${patientId}`
+        );
+
         setPatientData(response.data);
-      } catch (error) {
-        console.error('Error fetching patient data for editing:', error);
+
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load patient data.");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchPatientData();
+
   }, [patientId]);
 
+  // Handle input change
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setPatientData((prevData) => ({
+      ...prevData,
+      [name]: value
+    }));
+  };
+
+  // Update patient
   const handleUpdate = async () => {
+
+    setUpdating(true);
+    setError("");
+    setMessage("");
+
     try {
-      await axios.put(`http://hms-env.eba-tvxwbfse.eu-north-1.elasticbeanstalk.com/patient/${patientId}`, patientData);
-      onClose();
+
+      await axios.put(
+        `http://hms-env.eba-tvxwbfse.eu-north-1.elasticbeanstalk.com/patient/${patientId}`,
+        patientData
+      );
+
+      setMessage("Patient updated successfully!");
+
       onUpdate();
-    } catch (error) {
-      console.error('Error updating patient:', error);
+
+      setTimeout(() => {
+        onClose();
+      }, 1000);
+
+    } catch (err) {
+
+      console.error(err);
+      setError("Failed to update patient.");
+
+    } finally {
+
+      setUpdating(false);
+
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setPatientData({ ...patientData, [name]: value });
-  };
+  // Loading state
+  if (loading) {
+    return <p style={{ textAlign: "center" }}>Loading patient data...</p>;
+  }
 
   return (
-    <div>
-      <h2>Edit Patient</h2>
+    <div style={{ padding: "20px" }}>
 
-      <label>Name: </label>
-      <input type="text" name="name" value={patientData.name || ''} onChange={handleChange} />
+      <h2 style={{ textAlign: "center" }}>
+        Edit Patient
+      </h2>
 
-      <label>Weight: </label>
-      <input type="text" name="weight" value={patientData.weight || ''} onChange={handleChange} />
+      <div
+        style={{
+          maxWidth: "400px",
+          margin: "auto",
+          border: "1px solid #ccc",
+          padding: "20px",
+          borderRadius: "10px"
+        }}
+      >
 
-      <label>Gender: </label>
-      <input type="text" name="gender" value={patientData.gender || ''} onChange={handleChange} />
+        {/* Name */}
+        <label>Name:</label>
+        <input
+          type="text"
+          name="name"
+          value={patientData.name}
+          onChange={handleChange}
+        />
 
-      <label>Age: </label>
-      <input type="text" name="age" value={patientData.age || ''} onChange={handleChange} />
+        {/* Weight */}
+        <label>Weight:</label>
+        <input
+          type="text"
+          name="weight"
+          value={patientData.weight}
+          onChange={handleChange}
+        />
 
-      <label>Disease: </label>
-      <input type="text" name="disease" value={patientData.disease || ''} onChange={handleChange} />
+        {/* Gender */}
+        <label>Gender:</label>
+        <select
+          name="gender"
+          value={patientData.gender}
+          onChange={handleChange}
+        >
+          <option value="">Select Gender</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
 
-      {/* <label>Doctor ID: </label>
-      <input type="text" name="doctorId" value={patientData.doctorId || ''} onChange={handleChange} /> */}
-      <br />
-      <br />
-      <button onClick={handleUpdate}>Update</button>
-      <button onClick={onClose}>Cancel</button>
+        {/* Age */}
+        <label>Age:</label>
+        <input
+          type="number"
+          name="age"
+          value={patientData.age}
+          onChange={handleChange}
+        />
+
+        {/* Disease */}
+        <label>Disease:</label>
+        <input
+          type="text"
+          name="disease"
+          value={patientData.disease}
+          onChange={handleChange}
+        />
+
+        <br />
+
+        {/* Update Button */}
+        <button
+          onClick={handleUpdate}
+          disabled={updating}
+          style={{
+            marginTop: "10px",
+            width: "100%",
+            padding: "8px"
+          }}
+        >
+          {updating ? "Updating..." : "Update Patient"}
+        </button>
+
+        {/* Cancel Button */}
+        <button
+          onClick={onClose}
+          style={{
+            marginTop: "10px",
+            width: "100%",
+            padding: "8px"
+          }}
+        >
+          Cancel
+        </button>
+
+        {/* Success Message */}
+        {message && (
+          <p style={{ color: "green" }}>
+            {message}
+          </p>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <p style={{ color: "red" }}>
+            {error}
+          </p>
+        )}
+
+      </div>
     </div>
   );
 };
